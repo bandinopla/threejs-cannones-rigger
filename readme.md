@@ -5,6 +5,8 @@
  
 Create and place physics colliders in [Blender](http://blender.org/), export as GLB, and automatically set them up in [three.js](https://threejs.org/) with [cannon-es](https://github.com/pmndrs/cannon-es).
 
+Watch a use case: [Video Tutorial (Rigging a mechanical claw)](https://youtu.be/RtO2KUH9Vig)
+
 This solution includes two tools:
 
 1) A Blender addon for creating colliders in Blender 
