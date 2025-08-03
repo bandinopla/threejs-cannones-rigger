@@ -21,15 +21,15 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
  */
-import { Body, Box, type Constraint, DistanceConstraint, HingeConstraint, LockConstraint, PointToPointConstraint, type Shape, Sphere, Vec3, type World } from "cannon-es";
-import { Mesh, MeshNormalMaterial, Quaternion, Vector3, type Object3D } from "three";
+import { Body, Box, type Constraint, Quaternion as QuaternionCannon, DistanceConstraint, HingeConstraint, LockConstraint, PointToPointConstraint, type Shape, Sphere, Vec3, type World } from "cannon-es";
+import { Matrix4, Mesh, MeshNormalMaterial, Object3D, Quaternion, Vector3 } from "three";
 import { CannonTubeRig } from "threejs-cannones-tube";
 
 enum Type {
     Nothing,
     BoxCollider,
     SphereCollider,
-    GlueConstraint,
+    CompoundCollider,
     LockConstraint,
     HingeConstraint,
     PointConstraint,
@@ -129,14 +129,6 @@ export class ThreeJsCannonEsSceneRigger {
     }
 
     /**
-     * Returns a GlueConstraint by name.
-     * @param name The name of the constraint.
-     */
-    getGlueConstraint(name: string): GlueConstraint | undefined {
-        return this.getConstraintByName<GlueConstraint>(name);
-    }
-
-    /**
      * Returns a CableConstraint by name.
      * @param name The name of the constraint.
      */
@@ -226,11 +218,9 @@ export class ThreeJsCannonEsSceneRigger {
             else if (o.userData.threejscannones_type == Type.SphereCollider) {
                 bod = this.createCollider(new Sphere(o.scale.x), o);
             }
-
-            if (bod && (o.parent?.userData.threejscannones_type == Type.GlueConstraint)) {
-                if (!this.obj2bod.has(o.parent)) {
-                    this.obj2bod.set(o.parent, bod);
-                }
+            else if (o.userData.threejscannones_type== Type.CompoundCollider) {
+                bod = this.createCollider( undefined, o);
+                this.addCompoundShapes(bod,o);
             }
         });
 
@@ -253,9 +243,6 @@ export class ThreeJsCannonEsSceneRigger {
                     break;
                 case Type.LockConstraint:
                     constaint = this.createLockConstraint(A!, B!);
-                    break;
-                case Type.GlueConstraint:
-                    this.createGlueConstraint(o);
                     break;
                 case Type.SyncLocRot:
                     const source = this.getBodyByName(o.userData.threejscannones_syncSource?.name);
@@ -300,6 +287,43 @@ export class ThreeJsCannonEsSceneRigger {
 
         this.obj2bod.clear(); 
     }
+
+private addCompoundShapes(body: Body, compound: Object3D) {
+  const boxes = compound.children;
+
+  compound.updateMatrixWorld();
+
+  const compoundWorldPos = compound.getWorldPosition(new Vector3());
+  const compoundWorldQuat = compound.getWorldQuaternion(new Quaternion());
+  const invCompoundQuat = compoundWorldQuat.clone().invert();
+
+  for (const mesh of boxes) {
+    mesh.updateMatrixWorld();
+
+    const childWorldPos = mesh.getWorldPosition(new Vector3());
+    const childWorldQuat = mesh.getWorldQuaternion(new Quaternion());
+    const childScale = mesh.getWorldScale(new Vector3());
+
+    // Offset in compound's local space
+    const localOffset = childWorldPos.clone().sub(compoundWorldPos).applyQuaternion(invCompoundQuat);
+
+    // Orientation in compound's local space
+    const localQuat = invCompoundQuat.clone().multiply(childWorldQuat);
+
+    const offset = new Vec3(localOffset.x, localOffset.y, localOffset.z);
+    const orientation = new QuaternionCannon(localQuat.x, localQuat.y, localQuat.z, localQuat.w);
+    const halfExtents = new Vec3(childScale.x, childScale.y, childScale.z);
+    const shape = new Box(halfExtents);
+
+    body.addShape(shape, offset, orientation);
+  }
+
+  body.position.copy(new Vec3(compoundWorldPos.x, compoundWorldPos.y, compoundWorldPos.z));
+  body.quaternion.copy(new QuaternionCannon(compoundWorldQuat.x, compoundWorldQuat.y, compoundWorldQuat.z, compoundWorldQuat.w));
+
+  return body;
+}
+
 
     private createCustomConstraint( obj: Object3D, A?: Body, B?: Body ) {
         let group = obj.userData.threejscannones_cgroup ?? 1;
@@ -400,23 +424,6 @@ export class ThreeJsCannonEsSceneRigger {
         this.constraints.push( constraint ); 
     }
 
-
-    /**
-     * Creates a glue constraint between multiple bodies.
-     * @param o The Three.js object representing the glue constraint.
-     */
-    private createGlueConstraint(o: Object3D) {
-        const root = this.getBodyByName(o.children[0].userData.name)!;
-        let locks:LockConstraint[] = []
-
-        for (let i = 1; i < o.children.length; i++) {
-            const bod = this.getBodyByName(o.children[i].userData.name)!;
-            locks.push( this.createLockConstraint(root, bod) );
-        }
-
-        this.constraints.push( new GlueConstraint(o, locks) );  
-    }
-
     /**
      * Creates a lock constraint between two bodies.
      * @param a The first body.
@@ -466,7 +473,7 @@ export class ThreeJsCannonEsSceneRigger {
             axisA,
             axisB,
             collideConnected: false,
-            maxForce: 1e9,
+            //maxForce: 1e9,
         });
 
         this.world.addConstraint(constraint);
@@ -508,27 +515,24 @@ export class ThreeJsCannonEsSceneRigger {
      * @param o The Three.js object.
      * @returns The created Cannon body.
      */
-    private createCollider(shape: Shape, o: Object3D) {
+    private createCollider(shape: Shape|undefined, o: Object3D) {
         o.visible = false;
 
         let group = o.userData.threejscannones_cgroup ?? 1;
         let mask = o.userData.threejscannones_cwith ?? 1;
 
         //------- look for parents in case they override our defaults.
-        o.traverseAncestors(parent => {
+        // o.traverseAncestors(parent => { 
 
-            if (parent.userData.threejscannones_type != Type.GlueConstraint )
-                return
+        //     if (group == 1 && parent.userData.threejscannones_cgroup > 1) {
+        //         group = parent.userData.threejscannones_cgroup;
+        //     }
 
-            if (group == 1 && parent.userData.threejscannones_cgroup > 1) {
-                group = parent.userData.threejscannones_cgroup;
-            }
+        //     if (mask == 1 && parent.userData.threejscannones_cwith > 1) {
+        //         mask = parent.userData.threejscannones_cwith;
+        //     }
 
-            if (mask == 1 && parent.userData.threejscannones_cwith > 1) {
-                mask = parent.userData.threejscannones_cwith;
-            }
-
-        });
+        // });
 
         const body = new Body({
             shape,
@@ -536,10 +540,6 @@ export class ThreeJsCannonEsSceneRigger {
             collisionFilterMask: mask,
             collisionFilterGroup: group
         });
-
-        if (o.name == "caca" || o.name == "mickey") {
-            console.log(o.name, "GROUP:", group, "MASK:", mask)
-        }
 
         const pos = o.getWorldPosition(new Vector3());
 
@@ -603,54 +603,54 @@ export class ThreeJsCannonEsConstraint implements IConstraint {
     }
 }
 
-export class GlueConstraint extends ThreeJsCannonEsConstraint {
-
-    /** 
-     * @param obj the object that defined this constraint
-     * @param locks The glued objtec's constraints 
-     */
-    constructor( obj: Object3D, readonly locks: LockConstraint[] ){
-        super(obj)
-    }
-
-    override removeFrom(world: World): void {
-        while(this.locks.length)
-        {
-            world.removeConstraint( this.locks.pop()! );
-        }
-    }
-}
-
-/**
- * In charge of making sure a visual object copies the location and rotation of a cannon-es body
- */
 export class SyncConstraint extends ThreeJsCannonEsConstraint {
+  private offsetPos = new Vector3();
+  private offsetQuat = new Quaternion();
+  private hasInit = false;
 
-    readonly offset:Vector3;
+  constructor(obj: Object3D, readonly body: Body) {
+    super(obj);
+  }
 
-    constructor( obj: Object3D, readonly body: Body) { 
-        super(obj);
-        this.offset = obj.worldToLocal(new Vector3().copy(body.position)).negate(); 
-    } 
+  private initOffsets() {
+    const bodyPos = new Vector3(this.body.position.x, this.body.position.y, this.body.position.z);
+    const bodyQuat = new Quaternion(this.body.quaternion.x, this.body.quaternion.y, this.body.quaternion.z, this.body.quaternion.w);
 
-    override update(): void {
-        vec.copy(this.body.position);
-        rot.copy(this.body.quaternion);
+    const objWorldPos = new Vector3();
+    const objWorldQuat = new Quaternion();
+    this.obj.getWorldPosition(objWorldPos);
+    this.obj.getWorldQuaternion(objWorldQuat);
 
-        // local pos & rot relative to parent
-        const pos = this.obj.parent!.worldToLocal(vec);
-        const parentQuat = this.obj.parent!.getWorldQuaternion(rot2);
-        const finalrot = rot.premultiply(parentQuat.invert());
+    this.offsetPos.copy(objWorldPos).sub(bodyPos).applyQuaternion(bodyQuat.clone().invert());
+    this.offsetQuat.copy(bodyQuat.clone().invert().multiply(objWorldQuat));
 
-        // apply rotation and offset
-        this.obj.quaternion.copy(finalrot);
-        this.obj.position.copy(pos); // base world pos
+    this.hasInit = true;
+  }
 
-        // Apply local offset in world space
-        pos.copy(this.offset)
-        this.obj.localToWorld(pos)
-        this.obj.position.copy(pos) 
+  override update(): void {
+    if (!this.hasInit) this.initOffsets();
+
+    const bodyPos = new Vector3(this.body.position.x, this.body.position.y, this.body.position.z);
+    const bodyQuat = new Quaternion(this.body.quaternion.x, this.body.quaternion.y, this.body.quaternion.z, this.body.quaternion.w);
+
+    // Final world transform
+    const worldQuat = bodyQuat.clone().multiply(this.offsetQuat);
+    const worldPos = this.offsetPos.clone().applyQuaternion(bodyQuat).add(bodyPos);
+
+    // Convert to local space of parent, considering rotation and scale
+    if (this.obj.parent) {
+      this.obj.parent.updateMatrixWorld(true);
+
+      const mat = new Matrix4().compose(worldPos, worldQuat, new Vector3(1, 1, 1));
+      const parentInv = new Matrix4().copy(this.obj.parent.matrixWorld).invert();
+
+      mat.premultiply(parentInv);
+      mat.decompose(this.obj.position, this.obj.quaternion, new Vector3());
+    } else {
+      this.obj.position.copy(worldPos);
+      this.obj.quaternion.copy(worldQuat);
     }
+  }
 }
 
 /**

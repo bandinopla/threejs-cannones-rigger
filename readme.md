@@ -104,14 +104,11 @@ In all cases, when you call `get___Constraint( name )` the expected name is the 
 rigger.getBodyByName(name)  //-> CANNON.Body
 ```
 
-#### Glue All Child Colliders
-> Assign this to an empty. All children will be glued into one unit. The first child becomes the root.
-```js
-rigger.getGlueConstraint(name)  //-> GlueConstraint
-```
+#### Compound Collider
+> Assign this to an empty. All children will be glued into one collider/Body.  
 
-#### Glue Colliders
-> Connect two colliders (A & B) so they behave as a single rigid body.
+#### Glue/Lock Colliders
+> Connect two colliders (A & B) so they behave as a single rigid body. Creates a LockConstraint...
 ```js
 rigger.getLockConstraint(name)  //-> CANNON.LockConstraint
 ```

@@ -21,7 +21,7 @@
         }
     },
     "scripts": {
-        "dev": "vite",
+        "dev": "vite --config vite.config.site.js",
         "build": "tsc && vite build",
         "build-test-app": "vite build --config vite.config.site.js",
         "preview": "vite preview --config vite.config.site.js"

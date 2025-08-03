@@ -43,7 +43,7 @@ def on_type_change(self, context):
                 del context.object[prop]
             except KeyError:
                 pass 
-    elif value == 'box' or value == 'sphere' or value== 'glue' or 'tube' or 'custom':
+    elif value == 'box' or value == 'sphere' or value== 'compound' or 'tube' or 'custom':
         if "threejscannones_cgroup" not in context.object:
             context.object.threejscannones_cgroup[0] = True
         if "threejscannones_cwith" not in context.object:
@@ -105,8 +105,8 @@ bpy.types.Object.threejscannones_type = bpy.props.EnumProperty(
         ('x', "---", ""),
         ('box', "Box Collider", ""),
         ('sphere', "Sphere Collider", ""),
-        ('glue',"Glue all my child colliders","Combines childs making them stick to each other"),
-        ('lock',"Glue colliders","Glue two objects so they act like glued togheder."),
+        ('compound',"Compound shape (from child boxes)","Children are boxes, combines them into one single body/collider."),
+        ('lock',"Glue/Lock colliders","Glue two objects so they act like glued togheder."),
         ('hinge',"Hinge Constrain (on local Z axis)","Constrain that will hinge on the object's local z axis"),
         ('point',"Point Constrain","Connects 2 colliders via this point" ),
         ('dist',"Keep this distance", "Keeps the same distance between two bodies as they have right now"),
@@ -135,19 +135,16 @@ class ThreeJsCannonEsRigger(bpy.types.Panel):
             layout.prop(context.object, "threejscannones_customId")  
         
         match context.object.threejscannones_type: 
-            case 'box' | 'sphere':
+            case 'box' | 'sphere' | 'compound':
                 layout.prop(context.object, "threejscannones_mass")  
             case 'hinge' | 'point' | 'dist' | 'lock' | 'tube' | 'custom': 
                 layout.prop(context.object, "threejscannones_A")
-                layout.prop(context.object, "threejscannones_B")
-            case 'glue':
-                layout.separator()
-                layout.label(text="Below you can define default values for childs if they are not set...", icon='PREFERENCES')
+                layout.prop(context.object, "threejscannones_B") 
             case 'sync':
                 layout.prop(obj,"threejscannones_syncSource")
                 
         match context.object.threejscannones_type:  
-            case 'box' | 'sphere' | 'glue' | 'tube' | 'custom':   
+            case 'box' | 'sphere' | 'compound' | 'tube' | 'custom':   
                 layout.prop(context.object,"threejscannones_cgroup" )  
                 layout.prop(context.object,"threejscannones_cwith" )
 
