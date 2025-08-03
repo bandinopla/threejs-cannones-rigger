@@ -1,4 +1,4 @@
-![cover](cover.png) 
+![cover](https://github.com/bandinopla/threejs-cannones-rigger/raw/main/cover.png) 
 
 # ThreeJs / Cannon-es Scene Rigger
 ### Design in Blender, simulate in Three!
