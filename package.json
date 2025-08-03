@@ -1,0 +1,44 @@
+{
+    "name": "threejs-cannones-rigger",
+    "author": {
+        "name": "pablo bandinopla",
+        "url": "https://github.com/bandinopla"
+    },
+    "description": "Create and position physics colliders in Blender then export them as GLB and load them automatically in ThreeJs with Cannon-es.",
+    "version": "1.0.0",
+    "type": "module",
+    "packageManager": "pnpm@8.15.4",
+    "files": [
+        "dist"
+    ],
+    "main": "./dist/threejs-cannones-rigger.cjs",
+    "module": "./dist/threejs-cannones-rigger.js",
+    "types": "./dist/threejs-cannones-rigger.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/threejs-cannones-rigger.js",
+            "require": "./dist/threejs-cannones-rigger.cjs"
+        }
+    },
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "build-test-app": "vite build --config vite.config.site.js",
+        "preview": "vite preview --config vite.config.site.js"
+    },
+    "devDependencies": {
+        "@types/three": "^0.178.1",
+        "cannon-es": "^0.20.0",
+        "cannon-es-debugger": "^1.0.0",
+        "three": "^0.179.0",
+        "threejs-cannones-tube": "^0.0.9",
+        "typescript": "~5.8.3",
+        "vite": "^7.0.4",
+        "vite-plugin-dts": "^4.5.4"
+    },
+    "peerDependencies": {
+        "cannon-es": ">=0.20.0 <1.0.0",
+        "three": ">=0.178.0 <1.0.0",
+        "threejs-cannones-tube": ">=0.0.7 <1.0.0"
+    }
+}

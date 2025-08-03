@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ThreeJs + Cannon-es + Blender</title>
+    <meta name="description" content="Create and position physics colliders in Blender then export them as GLB and load them automatically in ThreeJs with Cannon-es.">
+    <meta name="keywords" content="Blender, Three.js, Cannon-es, WebGL, 3D, Physics, Rig">
+    <meta name="author" content="Pablo Bandinopla">
+    <meta property="og:title" content="ThreeJs + Cannon-es + Blender">
+    <meta property="og:description" content="Create and position physics colliders in Blender then export them as GLB and load them automatically in ThreeJs with Cannon-es.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://threejs-cannones-rigger.vercel.app/thumbnail.jpg">
+    <meta property="og:url" content="https://threejs-cannones-rigger.vercel.app">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <div id="legend">
+        Drop or click to load a .glb file | <input type="file" id="fileSelector"/>
+        <div>
+            <i>The first camera in the GLB will be used (it must have a camera).</i>
+        </div>
+        <div>
+            ---<br/>
+            Use this to test your rigs done using <a href="https://github.com/bandinopla/threejs-cannones-rigger" target="_blank">threejs-cannones-rigger</a>.
+        </div>
+    </div>
+    <div id="dropzone"> 
+    </div>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
