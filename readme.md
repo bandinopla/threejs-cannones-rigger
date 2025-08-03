@@ -33,7 +33,7 @@ Just make sure your glb has a camera and it is in the right angle where you want
 
 ### 1) Install the blender addon
 Blender → Preferences → Add-ons → Install → select `threejs-cannones-addon.py`
-> Download and install this = [threejs-cannones-addon.py](threejs-cannones-addon.py) 
+> Blender addon : [threejs-cannones-addon.py](https://github.com/bandinopla/threejs-cannones-rigger/raw/refs/heads/main/threejs-cannones-addon.py) 
 
 After installing, when you select an object in the scene inside of blender, you should see new expandable box appear in the Object's tab.
 
