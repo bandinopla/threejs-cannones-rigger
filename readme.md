@@ -5,6 +5,20 @@
 
 ![cover](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/cover.png) 
 
+
+## Table of Contents
+- [Who is this for?](#who-is-this-for)
+- [Features](#features)
+- [Test your rig](#test-your-rig)
+- [Usage](#usage)
+- [API](#api)
+- [Colliders / Bodies](#colliders--bodies)
+- [Constraints](#constraints)
+- [Relationship Lines](#relationship-lines)
+- [Collision groups and masks](#collision-groups-and-masks)
+- [Custom constaint](#sparkles-custom-constaint)
+- [License](#license)
+
 # ThreeJs / Cannon-es Scene Rigger
 ### Design in Blender, simulate in Three!
  
@@ -18,6 +32,9 @@ This solution includes two tools:
 1) A Blender addon for creating colliders in Blender 
 2) An NPM package to rig the physics in Three.js using cannon-es
  
+
+## Who is this for?
+Manually building complex physical rigs vía code can be a headache in the making. This toolset aims to make it a smooth visual experience. Focus on the design aspect in Blender, and let the devs work on the details once the rig is exported. Separate concerns. 
 
 ## Features
 
@@ -40,8 +57,11 @@ Just make sure your glb has a camera and it is in the right angle where you want
 ## Usage
 
 ### 1) Install the blender addon
-Blender → Preferences → Add-ons → Install → select `threejs-cannones-addon.py`
-> Blender addon : [threejs-cannones-addon.py](https://github.com/bandinopla/threejs-cannones-rigger/raw/refs/heads/main/threejs-cannones-addon.py) 
+Install from disk → [threejs-cannones-addon.py](https://github.com/bandinopla/threejs-cannones-rigger/raw/refs/heads/main/threejs-cannones-addon.py) 
+
+| Blender → Preferences | Add-ons → Install (.py) | New Object Panel |
+|---------|---------|---------|
+| ![Step 1](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/imgs/install-1.jpg) | ![Step 2](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/imgs/install-2.jpg) | ![Step 3](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/imgs/install-3.jpg) | 
 
 After installing, when you select an object in the scene inside of blender, you should see new expandable box appear in the Object's tab.
 
@@ -103,8 +123,8 @@ constructor(world: World, scene?: Object3D)
 - `getBodyByName(name: string)`: Returns a Cannon body by the name (the name in `userData.name` )  
 
 ---
-# Constraints
-In all cases, when you call `get___Constraint( name )` the expected name is the name of the object as you read it in blender. Which is automatically put in `userData.name` when you export to glb.
+# Colliders / Bodies
+![Colliders](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/imgs/colliders.jpg)
 
 #### Box / Sphere Collider
 > Use a default Cube or UV Sphere. Scale and rotate as needed. Only spheres must be scaled uniformly; boxes can be stretched freely.
@@ -113,7 +133,22 @@ rigger.getBodyByName(name)  //-> CANNON.Body
 ```
 
 #### Compound Collider
-> Assign this to an empty. All children will be glued into one collider/Body.  
+Assign this to an empty. All children will be glued into one collider/Body. The children **should be empty boxes** with your desire scale, rotation and positioning. 
+
+#### Tube / Cable
+>Creates a flexible cable using [threejs-cannones-tube](https://www.npmjs.com/package/threejs-cannones-tube).
+Add two child empties to the constraint object — one for the head, one for the tail. A and B can optionally anchor the ends. 
+
+**Material** : If the constraint body is a mesh (like a Box) it will use whatever material that mesh has and assign it to the mesh of the tube.
+```js
+rigger.getCableConstraint(name)  //-> CableConstraint
+rigger.getCableConstraint(name).cable //-> CannonTubeRig
+```
+
+# Constraints
+![Constraints](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/imgs/constraints.jpg)
+
+In all cases, when you call `get___Constraint( name )` the expected name is the name of the object as you read it in blender. Which is automatically put in `userData.name` when you export to glb.
 
 #### Glue/Lock Colliders
 > Connect two colliders (A & B) so they behave as a single rigid body. Creates a LockConstraint...
@@ -143,17 +178,27 @@ rigger.getDistanceConstraint(name)  //-> CANNON.DistanceConstraint
 > Use this on a visible object (e.g. mesh) to match the position & rotation of a physics collider.
 ```js
 rigger.getSyncConstraint(name)  //-> SyncConstraint
-```
+``` 
 
-#### Tube / Cable
->Creates a flexible cable using [threejs-cannones-tube](https://www.npmjs.com/package/threejs-cannones-tube).
-Add two child empties to the constraint object — one for the head, one for the tail. A and B can optionally anchor the ends. 
+# Relationship Lines
+![Colliders](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/imgs/lines.jpg)
+When a contraints references other objects, lines will appear to easily see their relationships with the currently selected object. You can toogle thouse lines on and off using the "Show Overlays" button.
 
-**Material** : If the constraint body is a mesh (like a Box) it will use whatever material that mesh has and assign it to the mesh of the tube.
-```js
-rigger.getCableConstraint(name)  //-> CableConstraint
-rigger.getCableConstraint(name).cable //-> CannonTubeRig
-```
+# Collision groups and masks
+The panel will show two key properties for physics-based collision management when you select a collider's body type. You can select 1 or many (clicking and holding SHIFT)
+> 
+
+![Bitmasks](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/imgs/bitmask.jpg)
+
+- **Collision Group `collisionGroup`**: "I'm in group...". Bitmask. Defines which group(s) the selected object belongs to. This is a single group index (0–31) that identifies the object's collision category.
+- **Collision Mask `collisionMask`**: "I collide with...".Bitmask. Specifies which group(s) the object collides with, using a 32-bit boolean array (checkboxes). Each checkbox corresponds to one of the 32 possible collision groups.
+
+### Understanding Collision Group and Mask
+- **Collision Group**: Sets which group your object belongs to (0–31). Think of it as the object’s "team" in the physics simulation.
+- **Collision Mask**: Controls which groups your object can collide with. Check boxes (1–32) to choose which "teams" it interacts with. For example, checking Group 2 means it collides with objects in Group 2.
+
+> #### When Collisions Don’t Happen
+> A collision between two objects won’t occur if their **Collision Masks** don’t include each other’s **Collision Group**. For example, if Object A’s mask doesn’t check Group 2, and Object B is in Group 2, they won’t collide, even if they touch in the physics simulation.
 
 # :sparkles: Custom constaint 
 In blender you can select "**Custom Constraint**" and pass a custom id (an arbitraty string of your choosing) then in javascript side, you define it like so:
