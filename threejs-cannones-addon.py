@@ -85,61 +85,49 @@ def on_type_change(self, context):
         if hasattr(obj, "threejscannones_cwith") and not obj.threejscannones_cwith:
             obj.threejscannones_cwith = True
 
-# === Draw functions (your code, slightly cleaned) ===
 def draw_line_to(obj, toPropName, color=(0.0, 1.0, 0.0, 0.8)):
- 
-    if not getattr(bpy.context.scene, "show_debug_lines", True):
-        return  # Skip drawing if disabled
 
+    if not bpy.context.space_data.overlay.show_overlays:
+        return  # All overlays are off — respect that
+
+    # === Check if debug lines are enabled ===
+    if not getattr(bpy.context.scene, "show_debug_lines", True):
+        return 
+
+    # === Validate object and property ===
     if not obj or not hasattr(obj, toPropName):
         return
 
     target = getattr(obj, toPropName, None)
     if not target or target == obj:
-        print(f".debugLine: {toPropName} not set or self-reference")  # Debug
-        return
+        return  # No valid target
 
+    # === Get world-space positions ===
     start = obj.matrix_world.translation
     end = target.matrix_world.translation
-    direction = end - start
-    length = direction.length
-    if length == 0:
-        return
-    direction.normalize()
 
-    segment_length = 0.1
-    gap_length = 0.15
-    step = segment_length + gap_length
-    num_segments = int(length / step) + 1
-
-    vertices = []
-    for i in range(num_segments):
-        seg_start = start + direction * (i * step)
-        seg_end = seg_start + direction * segment_length
-        if (seg_start - start).length > length:
-            break
-        seg_end = start + direction * min((seg_end - start).length, length)
-        vertices.append(seg_start)
-        vertices.append(seg_end)
-
-    if not vertices:
-        return
-
+    # === Create line batch ===
+    coords = [start, end]
     shader = gpu.shader.from_builtin('UNIFORM_COLOR')
-    batch = batch_for_shader(shader, 'LINES', {"pos": vertices})
+    batch = batch_for_shader(shader, 'LINES', {"pos": coords})
 
+    # === Draw settings ===
     gpu.state.blend_set('ALPHA')
     gpu.state.line_width_set(2.0)
+
     shader.bind()
     shader.uniform_float("color", color)
     batch.draw(shader)
+
+    # === Restore state ===
     gpu.state.blend_set('NONE')
     gpu.state.line_width_set(1.0)
 
 def draw_line_to_target():
     obj = bpy.context.active_object
+    
     if not obj:
-        return
+        return  
 
     # Draw multiple lines with different colors
     draw_line_to(obj, "threejscannones_A", (1.0, 0.0, 0.0, 0.8))      # Red
@@ -159,7 +147,9 @@ def draw_debug_lines_overlay(self, context):
     # Add a separator and a clear label
     col = layout.column()
     col.separator()
-    col.prop(scene, "show_debug_lines", text="ThreeJs/Cannon-es Lines", icon='RESTRICT_VIEW_OFF') 
+    col.enabled = context.space_data.overlay.show_overlays
+    icon = 'RESTRICT_VIEW_OFF' if scene.show_debug_lines else 'RESTRICT_VIEW_ON'
+    col.prop(scene, "show_debug_lines", text="ThreeJs/Cannon-es Lines", icon=icon) 
     col.separator()
 
 def remove_debug_lines_overlay():
