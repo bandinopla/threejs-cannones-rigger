@@ -3,7 +3,7 @@
 </a>
 
 
-![cover](https://github.com/bandinopla/threejs-cannones-rigger/raw/main/cover.png) 
+![cover](https://raw.githubusercontent.com/bandinopla/threejs-cannones-rigger/refs/heads/main/cover.png) 
 
 # ThreeJs / Cannon-es Scene Rigger
 ### Design in Blender, simulate in Three!
