@@ -1,3 +1,8 @@
+<a href="https://www.npmjs.com/package/threejs-cannones-rigger">
+  <img src="https://img.shields.io/npm/v/threejs-cannones-rigger.svg" alt="npm version">
+</a>
+
+
 ![cover](https://github.com/bandinopla/threejs-cannones-rigger/raw/main/cover.png) 
 
 # ThreeJs / Cannon-es Scene Rigger
