@@ -23,7 +23,7 @@
 bl_info = {
     "name": "Three.js Cannon-es Rigger",
     "author": "Pablo Bandinopla",
-    "version": (1, 0, 0),
+    "version": (1, 0, 1),
     "blender": (3, 0, 0),
     "description": "Adds properties and panels for Three.js + Cannon-es GLB export",
     "category": "Object",
