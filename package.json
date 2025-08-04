@@ -5,7 +5,7 @@
         "url": "https://github.com/bandinopla"
     },
     "description": "Create and position physics colliders in Blender then export them as GLB and load them automatically in ThreeJs with Cannon-es.",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "type": "module",
     "packageManager": "pnpm@8.15.4",
     "files": [
