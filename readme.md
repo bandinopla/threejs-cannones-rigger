@@ -10,7 +10,8 @@
  
 Create and place physics colliders in [Blender](http://blender.org/), export as GLB, and automatically set them up in [three.js](https://threejs.org/) with [cannon-es](https://github.com/pmndrs/cannon-es).
 
-Watch a use case: [Video Tutorial (Rigging a mechanical claw)](https://youtu.be/RtO2KUH9Vig)
+Watch [Video Tutorial (Rigging a mechanical claw)](https://youtu.be/RtO2KUH9Vig)
+Demo showcase app that inspired this addon: [Mechanical Claw Machine](https://threejs-claw-machine.vercel.app/)
 
 This solution includes two tools:
 
