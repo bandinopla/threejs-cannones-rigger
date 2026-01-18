@@ -55,17 +55,17 @@ const TypeAsString = {
 };
 
 function arrayToBitmask(flags: number[], flagsArray?: number[]): number {
-	if( typeof flags=="number" )
+	if( flagsArray )
 	{
-		flags = flagsArray ?? [];
+		flags = flagsArray;
 	}
-
-	if( flags.length==0 )
+  
+	if( !flags || flags.length==0 )
 	{
 		return 1;
 	}
 
-    return flags.reduce((mask, bit, idx) => mask | (bit << idx), 0);
+    return flags.reduce((mask, bit, idx) => mask | (bit << idx), 0) ;
 }
 
 // for re-use
