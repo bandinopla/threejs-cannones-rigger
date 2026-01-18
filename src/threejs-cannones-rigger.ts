@@ -62,7 +62,7 @@ function arrayToBitmask(flags: number[], flagsArray?: number[]): number {
 
 	if( flags.length==0 )
 	{
-		return 0;
+		return 1;
 	}
 
     return flags.reduce((mask, bit, idx) => mask | (bit << idx), 0);
@@ -233,11 +233,11 @@ export class ThreeJsCannonEsSceneRigger {
 				o.userData.threejscannones_type = TypeAsString[o.userData.threejscannones_type as keyof typeof TypeAsString];
 			}
 
-            if (o.userData.threejscannones_cgroup) {
+            if ("threejscannones_cgroup" in o.userData || "threejscannones_cgroup_array" in o.userData) {
                 o.userData.threejscannones_cgroup = arrayToBitmask(o.userData.threejscannones_cgroup, o.userData.threejscannones_cgroup_array);
             }
 
-            if (o.userData.threejscannones_cwith) {
+            if ("threejscannones_cwith" in o.userData || "threejscannones_cwith_array" in o.userData) {
                 o.userData.threejscannones_cwith = arrayToBitmask(o.userData.threejscannones_cwith, o.userData.threejscannones_cwith_array);
             }
 
