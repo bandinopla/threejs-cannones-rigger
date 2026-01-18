@@ -172,12 +172,21 @@ bpy.types.Object.threejscannones_layers = bpy.props.EnumProperty(
     ]
 )  
 
+def make_update_vec_to_array(prop_name, key_name):
+    def _update(self, context):
+        self[key_name] = [1 if v else 0 for v in getattr(self, prop_name)]
+    return _update
+
 bpy.types.Object.threejscannones_cgroup = bpy.props.BoolVectorProperty(
     name="I'm in group(s)...", 
     description="Groups in which this collider is in...",
     size=32,
     subtype='LAYER_MEMBER',  
-    default=(True,) + (False,) * 31
+    default=(True,) + (False,) * 31,
+    update=make_update_vec_to_array(
+        "threejscannones_cgroup",
+        "threejscannones_cgroup_array"
+    ),
 )
 
 bpy.types.Object.threejscannones_customId = bpy.props.StringProperty(name="Custom ID") 
@@ -187,7 +196,11 @@ bpy.types.Object.threejscannones_cwith = bpy.props.BoolVectorProperty(
     description="Groups that collide with us...",
     size=32,
     subtype='LAYER_MEMBER',  
-    default=(True,) + (False,) * 31
+    default=(True,) + (False,) * 31,
+	update=make_update_vec_to_array(
+        "threejscannones_cwith",
+        "threejscannones_cwith_array"
+    ),
 ) 
 
 bpy.types.Object.threejscannones_mass = bpy.props.FloatProperty(name="Mass") 
@@ -273,7 +286,7 @@ def unregister():
             print("🧹 Removed old draw handler")
         except (AttributeError, KeyError, TypeError):
             print("⚠️  Draw handler was already removed")
-        draw_handler = None
+        draw_handler = None 
 
 if __name__ == "__main__":
     register()

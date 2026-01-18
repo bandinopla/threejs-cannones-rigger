@@ -54,7 +54,17 @@ const TypeAsString = {
   "custom" : Type.Custom,
 };
 
-function arrayToBitmask(flags: number[]): number {
+function arrayToBitmask(flags: number[], flagsArray?: number[]): number {
+	if( typeof flags=="number" )
+	{
+		flags = flagsArray ?? [];
+	}
+
+	if( flags.length==0 )
+	{
+		return 0;
+	}
+
     return flags.reduce((mask, bit, idx) => mask | (bit << idx), 0);
 }
 
@@ -224,11 +234,11 @@ export class ThreeJsCannonEsSceneRigger {
 			}
 
             if (o.userData.threejscannones_cgroup) {
-                o.userData.threejscannones_cgroup = arrayToBitmask(o.userData.threejscannones_cgroup);
+                o.userData.threejscannones_cgroup = arrayToBitmask(o.userData.threejscannones_cgroup, o.userData.threejscannones_cgroup_array);
             }
 
             if (o.userData.threejscannones_cwith) {
-                o.userData.threejscannones_cwith = arrayToBitmask(o.userData.threejscannones_cwith);
+                o.userData.threejscannones_cwith = arrayToBitmask(o.userData.threejscannones_cwith, o.userData.threejscannones_cwith_array);
             }
 
 
