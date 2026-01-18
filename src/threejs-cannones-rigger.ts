@@ -39,6 +39,21 @@ enum Type {
     Custom
 } 
 
+const TypeAsString = {
+  // in blender 5+ enum properties are no longer exported as int
+  "x" : Type.Nothing,
+  "box" : Type.BoxCollider,
+  "sphere" : Type.SphereCollider,
+  "compound" : Type.CompoundCollider,
+  "lock" : Type.LockConstraint,
+  "hinge" : Type.HingeConstraint,
+  "point" : Type.PointConstraint,
+  "dist" : Type.DistanceConstraint,
+  "sync" : Type.SyncLocRot,
+  "tube" : Type.Cable,
+  "custom" : Type.Custom,
+};
+
 function arrayToBitmask(flags: number[]): number {
     return flags.reduce((mask, bit, idx) => mask | (bit << idx), 0);
 }
@@ -202,6 +217,11 @@ export class ThreeJsCannonEsSceneRigger {
         scene.traverse(o => {
 
             let bod: Body | undefined;
+
+			if( typeof o.userData.threejscannones_type == "string" )
+			{
+				o.userData.threejscannones_type = TypeAsString[o.userData.threejscannones_type as keyof typeof TypeAsString];
+			}
 
             if (o.userData.threejscannones_cgroup) {
                 o.userData.threejscannones_cgroup = arrayToBitmask(o.userData.threejscannones_cgroup);
