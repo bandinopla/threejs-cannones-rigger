@@ -37,9 +37,21 @@ from gpu_extras.batch import batch_for_shader
 if 'draw_handler' not in globals():
     draw_handler = None
 
+def create_sync_callback(prop_name, func=None):
+    """Factory function that creates a callback for a specific property"""
+    def callback(self, context):
+        value = getattr(self, prop_name)
+        self[prop_name] = value
+        
+        # Call the original function if provided
+        if func is not None:
+            func(self, context)
+    
+    return callback
+
 def on_type_change(self, context):
     obj = context.object
-    value = self.threejscannones_type  # current type
+    value = self.threejscannones_type  # current type 
 
     # === Cleanup based on type ===
 
@@ -47,6 +59,7 @@ def on_type_change(self, context):
     if value != 'sync':
         if hasattr(obj, "threejscannones_syncSource"):
             obj.threejscannones_syncSource = None
+            del self["threejscannones_syncSource"]
 
     # If 'x', clear physics-related props
     if value == 'x':
@@ -55,14 +68,21 @@ def on_type_change(self, context):
             "threejscannones_B",
             "threejscannones_mass",
             "threejscannones_cgroup",
+            "threejscannones_cgroup_array",
             "threejscannones_cwith",
+            "threejscannones_cwith_array",
             "threejscannones_customId"
         ]
-        for prop in props_to_clear:
+        for prop in props_to_clear: 
+            if prop in self:
+                del self[prop]
             if hasattr(obj, prop):
                 # Clear based on type
                 attr = getattr(obj, prop)
-                if isinstance(attr, bpy.types.Object):
+                if prop.endswith("_cgroup") or prop.endswith("_cwith"):
+                    default = [True] + [False] * (len(attr) - 1)
+                    setattr(obj, prop, default)
+                elif isinstance(attr, bpy.types.Object):
                     setattr(obj, prop, None)
                 elif isinstance(attr, str):
                     setattr(obj, prop, "")
@@ -70,20 +90,25 @@ def on_type_change(self, context):
                     setattr(obj, prop, 0)
                 elif isinstance(attr, bool):
                     setattr(obj, prop, False)
+            
 
     # If 'sync', clear A and B
     elif value == 'sync':
         if hasattr(obj, "threejscannones_A"):
             obj.threejscannones_A = None
+            del self["threejscannones_A"]
         if hasattr(obj, "threejscannones_B"):
             obj.threejscannones_B = None
+            del self["threejscannones_B"]
 
     # For shape types: ensure cgroup and cwith are initialized
     elif value in {'box', 'sphere', 'compound', 'tube', 'custom'}:
         if hasattr(obj, "threejscannones_cgroup") and not obj.threejscannones_cgroup:
             obj.threejscannones_cgroup = True
+            del self["threejscannones_cgroup"]
         if hasattr(obj, "threejscannones_cwith") and not obj.threejscannones_cwith:
             obj.threejscannones_cwith = True
+            del self["threejscannones_cwith"]
 
 def draw_line_to(obj, toPropName, color=(0.0, 1.0, 0.0, 0.8)):
 
@@ -189,7 +214,7 @@ bpy.types.Object.threejscannones_cgroup = bpy.props.BoolVectorProperty(
     ),
 )
 
-bpy.types.Object.threejscannones_customId = bpy.props.StringProperty(name="Custom ID") 
+bpy.types.Object.threejscannones_customId = bpy.props.StringProperty(name="Custom ID", update=create_sync_callback("threejscannones_customId")) 
 
 bpy.types.Object.threejscannones_cwith = bpy.props.BoolVectorProperty(
     name="I collide with group(s)...",
@@ -203,19 +228,22 @@ bpy.types.Object.threejscannones_cwith = bpy.props.BoolVectorProperty(
     ),
 ) 
 
-bpy.types.Object.threejscannones_mass = bpy.props.FloatProperty(name="Mass") 
+bpy.types.Object.threejscannones_mass = bpy.props.FloatProperty(name="Mass", update=create_sync_callback("threejscannones_mass")) 
 
 bpy.types.Object.threejscannones_A = bpy.props.PointerProperty(
     name="A",
     type=bpy.types.Object, 
+	update=create_sync_callback("threejscannones_A")
 )
 bpy.types.Object.threejscannones_B = bpy.props.PointerProperty(
     name="B",
     type=bpy.types.Object, 
+	update=create_sync_callback("threejscannones_B")
 ) 
 bpy.types.Object.threejscannones_syncSource = bpy.props.PointerProperty(
     name="Collider",
     type=bpy.types.Object, 
+	update=create_sync_callback("threejscannones_syncSource")
 ) 
 bpy.types.Object.threejscannones_type = bpy.props.EnumProperty(
     name="Type",
@@ -232,7 +260,7 @@ bpy.types.Object.threejscannones_type = bpy.props.EnumProperty(
         ('tube',"Tube / Cable", "Creates a cable from A to B. Must have 2 emoty childs, one representing the head, and the other the tail."),
         ('custom',"Custom Constraint", "Define your own custom constrain")
     ],
-    update=on_type_change
+    update=create_sync_callback("threejscannones_type", on_type_change)
 )
 
 class ThreeJsCannonEsRigger(bpy.types.Panel):
