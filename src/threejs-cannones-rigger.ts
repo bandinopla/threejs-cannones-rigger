@@ -21,7 +21,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
  */
-import { Body, Box, type Constraint, Quaternion as QuaternionCannon, DistanceConstraint, HingeConstraint, LockConstraint, PointToPointConstraint, type Shape, Sphere, Vec3, type World } from "cannon-es";
+import { Body, Box, type Constraint, Quaternion as QuaternionCannon, DistanceConstraint, HingeConstraint, LockConstraint, PointToPointConstraint, type Shape, Sphere, Vec3, type World, Trimesh } from "cannon-es";
 import { Matrix4, Mesh, MeshNormalMaterial, Object3D, Quaternion, Vector3 } from "three";
 import { CannonTubeRig } from "threejs-cannones-tube";
 
@@ -36,7 +36,8 @@ enum Type {
     DistanceConstraint,
     SyncLocRot,
     Cable,
-    Custom
+    Custom,
+	Trimesh
 } 
 
 const TypeAsString = {
@@ -52,6 +53,7 @@ const TypeAsString = {
   "sync" : Type.SyncLocRot,
   "tube" : Type.Cable,
   "custom" : Type.Custom,
+  "trimesh" : Type.Trimesh
 };
 
 function arrayToBitmask(flags: number[], flagsArray?: number[]): number {
@@ -242,16 +244,36 @@ export class ThreeJsCannonEsSceneRigger {
             }
 
 
-            if (o.userData.threejscannones_type == Type.BoxCollider) {
-                bod = this.createCollider(new Box(new Vec3(o.scale.x, o.scale.y, o.scale.z)), o);
-            }
-            else if (o.userData.threejscannones_type == Type.SphereCollider) {
-                bod = this.createCollider(new Sphere(o.scale.x), o);
-            }
-            else if (o.userData.threejscannones_type== Type.CompoundCollider) {
-                bod = this.createCollider( undefined, o);
-                this.addCompoundShapes(bod,o);
-            }
+			switch (o.userData.threejscannones_type) {
+				case Type.Trimesh:
+					const mesh = o as Mesh;
+					// assuming you already have a THREE.BufferGeometry
+					const geometry = mesh.geometry.clone(); 
+
+					mesh.updateWorldMatrix(true, false);
+					geometry.applyMatrix4(mesh.matrixWorld) ;
+
+					const vertices = geometry.attributes.position.array;
+					const indices = geometry.index!.array;
+
+					const shape = new Trimesh(vertices as any as number[], indices as any as number[]);
+
+					bod = this.createCollider(shape, o);
+					break;
+
+				case Type.BoxCollider:
+					bod = this.createCollider(new Box(new Vec3(o.scale.x, o.scale.y, o.scale.z)), o);
+					break;
+
+				case Type.SphereCollider:
+					bod = this.createCollider(new Sphere(o.scale.x), o);
+					break;
+
+				case Type.CompoundCollider:
+					bod = this.createCollider(undefined, o);
+					this.addCompoundShapes(bod, o);
+					break;
+			} 
         });
 
         // now that all objects are created we can create the constrains

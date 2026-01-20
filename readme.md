@@ -49,6 +49,7 @@ Manually building complex physical rigs vía code can be a headache in the makin
     - [cable](https://www.npmjs.com/package/threejs-cannones-tube) 
     - synchronization (copy location & rotation) 
     - :sparkles: your own custom constraint :sparkles:
+	- [TriMesh](https://pmndrs.github.io/cannon-es/docs/classes/Trimesh.html) : mesh collider 
 
 ## Test your rig
 You can quicly test your rig here: https://threejs-cannones-rigger.vercel.app
@@ -134,6 +135,9 @@ rigger.getBodyByName(name)  //-> CANNON.Body
 
 #### Compound Collider
 Assign this to an empty. All children will be glued into one collider/Body. The children **should be empty boxes** with your desire scale, rotation and positioning. 
+
+#### TriMesh Collider
+Turn a mesh into a collider. Read [Trimesh](https://pmndrs.github.io/cannon-es/docs/classes/Trimesh.html)
 
 #### Tube / Cable
 >Creates a flexible cable using [threejs-cannones-tube](https://www.npmjs.com/package/threejs-cannones-tube).

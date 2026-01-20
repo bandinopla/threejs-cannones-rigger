@@ -258,7 +258,8 @@ bpy.types.Object.threejscannones_type = bpy.props.EnumProperty(
         ('dist',"Keep this distance", "Keeps the same distance between two bodies as they have right now"),
         ('sync', "Sync position & rotation", "this ThreeJs object will copy the position and rotation of the cannon's collider."),
         ('tube',"Tube / Cable", "Creates a cable from A to B. Must have 2 emoty childs, one representing the head, and the other the tail."),
-        ('custom',"Custom Constraint", "Define your own custom constrain")
+        ('custom',"Custom Constraint", "Define your own custom constrain"),
+		('trimesh',"TriMesh (mesh collider)","Mesh collider, will use the object's mesh to create a collider.")
     ],
     update=create_sync_callback("threejscannones_type", on_type_change)
 )
@@ -281,7 +282,7 @@ class ThreeJsCannonEsRigger(bpy.types.Panel):
             layout.prop(context.object, "threejscannones_customId")  
         
         match context.object.threejscannones_type: 
-            case 'box' | 'sphere' | 'compound':
+            case 'box' | 'sphere' | 'compound' | 'trimesh':
                 layout.prop(context.object, "threejscannones_mass")  
             case 'hinge' | 'point' | 'dist' | 'lock' | 'tube' | 'custom': 
                 row = layout.row()
@@ -291,7 +292,7 @@ class ThreeJsCannonEsRigger(bpy.types.Panel):
                 layout.prop(obj,"threejscannones_syncSource")
                 
         match context.object.threejscannones_type:  
-            case 'box' | 'sphere' | 'compound' | 'tube' | 'custom':   
+            case 'box' | 'sphere' | 'compound' | 'tube' | 'custom' | 'trimesh':   
                 layout.prop(context.object,"threejscannones_cgroup" )  
                 layout.prop(context.object,"threejscannones_cwith" )
 
